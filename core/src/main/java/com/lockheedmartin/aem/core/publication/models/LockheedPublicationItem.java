@@ -43,7 +43,7 @@ public class LockheedPublicationItem
     TreeMap<String, String> tags;
 
     @Expose @SerializedName(value = "Authors")
-    TreeMap<String, String> authors;
+    ArrayList<String> authors;
 
     @Expose @SerializedName(value = "Domain")
     TreeMap<String, String> domain;
@@ -81,18 +81,11 @@ public class LockheedPublicationItem
         this.sourceURL = sourceURL;
     } */
 
-    public LockheedPublicationItem(Calendar dateTime, String title, String url, TreeMap<String, String> tags, String placeOfPublication, String description, TreeMap<String, String> authors)
+    public LockheedPublicationItem(String date, String title, String url, String placeOfPublication, String description, TreeMap<String, String> tags, ArrayList<String> authors)
     {
         this.title = title;
-        if(dateTime != null)
-        {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
-            this.date = simpleDateFormat.format(dateTime.getTime());
-        }
-        else
-        {
-            this.date = "";
-        }
+
+        this.date = date;
         
         this.url = url;
 
@@ -103,15 +96,7 @@ public class LockheedPublicationItem
         this.placeOfPublication = placeOfPublication;
 
         this.tags = tags;
-        /* this.url = url;
-        this.thumbnailUrl = thumbnailUrl;
-        this.tags = tags;
 
-        this.domain = domain;
-        
-        this.country = country;
-        
-        this.sourceURL = sourceURL; */
     }
     
     public Calendar getCalendarDate() throws ParseException

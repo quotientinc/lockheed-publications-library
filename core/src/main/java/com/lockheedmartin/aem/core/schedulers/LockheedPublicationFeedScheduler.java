@@ -313,7 +313,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 }
                             }    */    
                             
-                            if(!content.hasProperty("publicationTitle")){
+                            if(content.hasProperty("publicationTitle")){
                                 isPublication = true;
                             }
 
@@ -327,86 +327,40 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                             {   //logger.error("Parsing "+p.getPath());
                                 /** get the page title **/
 
+                                String title = "";
+                                String description = "";
+                                String url = "";
+                                String date = "";
+                                String placeOfPublication = "";
+
+                                title = content.getProperty("publicationTitle").getString();
+
+                                if(content.hasProperty("publicationDescription")){
+                                    description = content.getProperty("publicationDescription").getString();
+                                }
+
+                                if(content.hasProperty("publicationURL")){
+                                    url = content.getProperty("publicationURL").getString();
+                                }
+
+                                if(content.hasProperty("publicationDate")){
+                                    date = content.getProperty("publicationDate").getString();
+                                }
+
+                                if(content.hasProperty("placeOfPublication")){
+                                    placeOfPublication = content.getProperty("placeOfPublication").getString();
+                                }
+
+                                TreeMap<String, String> tags = getPublicationTags(content);
+                                ArrayList<String> authors = getPublicationAuthors(content);
+
                                 logger.info("-----");
                                 logger.info(p.toString());
                                 logger.info(p.getPath().toString());
                                 logger.info(p.getTitle().toString());
 
-                                String title = p.getTitle();
-
-                                /** get page url **/
-                                String url = p.getPath() + ".html";
-                                String sourceURL = url;
-
-                                /* if(content.hasProperty("externalNewsArticlePath"))
-                                {
-                                    if(content.getProperty("externalNewsArticlePath").isMultiple())
-                                    {
-                                        List<Value> externalPaths = Arrays.asList(content.getProperty("externalNewsArticlePath").getValues());
-
-                                        for(int i = 0; i < externalPaths.size(); i++)
-                                        {
-                                            if(!externalPaths.get(i).getString().isEmpty() && !externalPaths.get(i).getString().equals(","))
-                                            {
-                                                url = externalPaths.get(i).getString();
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if(!content.getProperty("externalNewsArticlePath").getString().isEmpty() &&  !content.getProperty("externalNewsArticlePath").getString().equals(",")) {
-                                            url = content.getProperty("externalNewsArticlePath").getString();
-                                        }
-                                    }
-                                } */                            
-
-                                Calendar dateTime = null;
-
-                                /** get the lastModified date **/
-                                if(content.hasProperty("dateTime")) {
-                                    dateTime = content.getProperty("dateTime").getDate();
-                                }
-                                else if(content.hasProperty("cq:lastModified"))
-                                {
-                                    dateTime = content.getProperty("cq:lastModified").getDate();
-                                }
-                                else if(content.hasProperty("jcr:created"))
-                                {
-                                    dateTime = content.getProperty("jcr:created").getDate();
-                                }
-                                else
-                                {
-                                    dateTime = null;
-                                }
-
-                                /** Get thumbnail url for the page **/
-                                String thumbnailUrl = "";
-                                /* if(content.hasNode("thumbnailImage"))
-                                {
-                                    Node thumbnail = content.getNode("thumbnailImage");
-
-                                    if(thumbnail.hasProperty("fileReference"))
-                                    {
-                                        thumbnailUrl = thumbnail.getProperty("fileReference").getString();
-                                    }
-                                } */
-
-                                /** Get page tags **/
-
-                                //String thumbnailUrl = "";
-                                String description = "";
-                                String placeOfPublication = "";
-                                
-                                TreeMap<String, String> tags = getProductPageTags(content);
-                                TreeMap<String, String> authors = getPublicationAuthors(content);
-                                /* TreeMap<String, String> domain = getDomain(content);
-                                TreeMap<String, String> country = getCountry(content); */
-
-                                //items.add(new LockheedPublicationItem(title, dateTime, url, thumbnailUrl, tags, domain, country, sourceURL));
                                 logger.info("2");
-                                items.add(new LockheedPublicationItem(dateTime, title, url, tags, placeOfPublication, description, authors ));
-                                //items.add(new LockheedPublicationItem(title, url));
+                                items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, tags, authors));
                                 logger.info("3");
                             }
                         }
@@ -421,29 +375,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         }
 
         return items;
-    }
-
-
-
-    private Document getXmlDocumentFromString(String xmlString)
-    {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = null;
-
-        try
-        {
-            builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(new InputSource(new StringReader(xmlString)));
-
-            return doc;
-        }
-        catch (Exception e)
-        {
-            //logger.error(e.getMessage());
-            //e.printStackTrace();
-        }
-
-        return null;
     }
 
     private void getMapping() {
@@ -500,7 +431,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
     }
 
     
-    private TreeMap<String, String> getProductPageTags(Node content)
+    private TreeMap<String, String> getPublicationTags(Node content)
     {
         //List<String> tags = new ArrayList<>();
         TreeMap<String, String> tags = new TreeMap<String, String>();
@@ -510,19 +441,19 @@ public class LockheedPublicationFeedScheduler implements Runnable {
             TagManager tm = resourceResolver.adaptTo(TagManager.class);
             List<Value> tagValues = new ArrayList<>();
 
-          /*   if(content.hasProperty("tagField"))
+            if(content.hasProperty("publicationTags"))
             {
-                if(content.getProperty("tagField").isMultiple())
+                if(content.getProperty("publicationTags").isMultiple())
                 {
-                    tagValues.addAll(Arrays.asList(content.getProperty("tagField").getValues()));
+                    tagValues.addAll(Arrays.asList(content.getProperty("publicationTags").getValues()));
                 }
                 else
                 {
-                    tagValues.add(content.getProperty("tagField").getValue());
+                    tagValues.add(content.getProperty("publicationTags").getValue());
                 }
-            } */
+            }
 
-            if(content.hasProperty("programOrFunctionTag"))
+            /* if(content.hasProperty("programOrFunctionTag"))
             {
                 if(content.getProperty("programOrFunctionTag").isMultiple())
                 {
@@ -532,7 +463,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                 {
                     tagValues.add(content.getProperty("programOrFunctionTag").getValue());
                 }
-            }
+            } */
 
             if(!config.mapping_file_path().equals("")) {
                 //logger.error("Using Tag Mapping");
@@ -570,166 +501,40 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         return tags;
     }
 
-    private TreeMap<String, String> getPublicationAuthors(Node content)
+    private ArrayList<String> getPublicationAuthors(Node content)
     {
         //List<String> tags = new ArrayList<>();
         TreeMap<String, String> tags = new TreeMap<String, String>();
-
+        ArrayList<String> authorTest2 = new ArrayList<String>();
         try
         {
-            TagManager tm = resourceResolver.adaptTo(TagManager.class);
-            List<Value> tagValues = new ArrayList<>();
 
-            /* if(content.hasProperty("capabilitiesTag"))
+            logger.info("A");
+            if(content.hasNode("multifield"))
             {
-                if(content.getProperty("capabilitiesTag").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("capabilitiesTag").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("capabilitiesTag").getValue());
-                }
-            } */
-            if(content.hasProperty("tagField"))
-            {
-                if(content.getProperty("tagField").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("tagField").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("tagField").getValue());
-                }
-            }
+                logger.info("B");
+                String test = content.getNode("multifield").toString();
+                logger.info(test);
+                Node multifieldNode = content.getNode("multifield");
+                NodeIterator childNodes = multifieldNode.getNodes();
 
-            if(content.hasProperty("programOrFunctionTag"))
-            {
-                if(content.getProperty("programOrFunctionTag").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("programOrFunctionTag").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("programOrFunctionTag").getValue());
-                }
-            }
+                while (childNodes.hasNext()){
+                    Node childNode = childNodes.nextNode();
+                    String authorTest = childNode.getProperty("publicationAuthor").getString();
+                    logger.info("---");
+                    authorTest2.add(authorTest);
 
-            if(!config.mapping_file_path().equals("")) {
-                //logger.error("Using Tag Mapping");
-                for(Value v: tagValues)
-                {
-                    //logger.error("Finding "+v.getString());
-                    if(tagMap.get(v.getString())!=null) {
-                        //logger.error("Found "+v.getString());
-                        List<String> tagMapEntries = tagMap.get(v.getString());
-                        for(String tagMapEntry: tagMapEntries) {
-                            if(tagTitleMap.get(tagMapEntry)!=null) {
-                                //logger.error("Adding "+tagMapEntry+":"+tagTitleMap.get(tagMapEntry));
-                                tags.put(tagMapEntry, tagTitleMap.get(tagMapEntry));
-                            }
-                        }
-                    }
                 }
-            } else {
-                for(Value v: tagValues)
-                {
-                    String tagId = v.getString();
-                    Tag t = tm.resolve(tagId);
-                    tags.put(t.getName(), t.getTitle());
-                }                
-            }
 
-            //Collections.sort(tags);
+            }     
         }
         catch(Exception e)
         {
-            //e.printStackTrace();
+
             logger.error(e.getMessage());
         }
 
-        return tags;
+        return authorTest2;
     }
 
-    private TreeMap<String, String> getDomain(Node content)
-    {
-        //List<String> tags = new ArrayList<>();
-        TreeMap<String, String> domain = new TreeMap<String, String>();
-
-        try
-        {
-            TagManager tm = resourceResolver.adaptTo(TagManager.class);
-            List<Value> tagValues = new ArrayList<>();
-
-            if(content.hasProperty("domainTag"))
-            {
-                if(content.getProperty("domainTag").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("domainTag").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("domainTag").getValue());
-                }
-            }
-
-            for(Value v: tagValues)
-            {
-                String tagId = v.getString();
-                Tag t = tm.resolve(tagId);
-                domain.put(t.getName(), t.getTitle());
-            }
-
-            //Collections.sort(tags);
-        }
-        catch(Exception e)
-        {
-            //e.printStackTrace();
-            logger.error(e.getMessage());
-        }
-
-        return domain;
-    }
-
-    private TreeMap<String, String> getCountry(Node content)
-    {
-        //List<String> tags = new ArrayList<>();
-        TreeMap<String, String> country = new TreeMap<String, String>();
-
-        try
-        {
-            TagManager tm = resourceResolver.adaptTo(TagManager.class);
-            List<Value> tagValues = new ArrayList<>();
-
-            if(content.hasProperty("countryTag"))
-            {
-                if(content.getProperty("countryTag").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("countryTag").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("countryTag").getValue());
-                }
-            }
-
-            for(Value v: tagValues)
-            {
-                String tagId = v.getString();
-                Tag t = tm.resolve(tagId);
-                country.put(t.getName(), t.getTitle());
-            }
-
-            //Collections.sort(tags);
-        }
-        catch(Exception e)
-        {
-            //e.printStackTrace();
-            logger.error(e.getMessage());
-        }
-
-        return country;
-    }    
-    
-      
 }
