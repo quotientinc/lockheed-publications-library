@@ -25,6 +25,10 @@ import com.day.cq.tagging.TagManager;
 import com.day.cq.wcm.api.Page;
 import com.day.cq.wcm.api.PageManager;
 import com.google.gson.*;
+import com.lockheedmartin.aem.core.publication.comparators.SortPublicationItemByDate;
+import com.lockheedmartin.aem.core.publication.comparators.SortPublicationItemByTitle;
+import com.lockheedmartin.aem.core.publication.models.LockheedPublicationItem;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -63,10 +67,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.sling.commons.json.*;
-
-import com.lockheedmartin.aem.core.product.models.LockheedPublicationItem;
-import com.lockheedmartin.aem.core.product.comparators.SortPublicationItemByDate;
-import com.lockheedmartin.aem.core.product.comparators.SortPublicationItemByTitle;
 
 
 /**
@@ -228,7 +228,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
         items.addAll(getAEMProductfeedPages());
 
-
+        logger.info("1");
         //items.sort(new SortPublicationItemByTitle());
 
         Collections.reverse(items);
@@ -281,14 +281,16 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                             Node content = pNode.getNode("jcr:content");
 
                             boolean isPublished = true;
+                            //logger.info(content.toString());
 
                             ReplicationStatus publishedStatus = null;
-                            publishedStatus = p.adaptTo(ReplicationStatus.class);
+                            //publishedStatus = p.adaptTo(ReplicationStatus.class);
                             //isPublished = publishedStatus.isActivated();
 
-                            boolean isProduct = false;
+                            /* boolean isProduct = false; */
+                            boolean isPublication = false;
 
-                            if(content.hasProperty("contentTypeTag"))
+                            /* if(content.hasProperty("contentTypeTag"))
                             {
                                 if(content.getProperty("contentTypeTag").isMultiple())
                                 {
@@ -309,16 +311,26 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                         isProduct = true;
                                     }
                                 }
-                            }                       
+                            }    */    
+                            
+                            if(!content.hasProperty("publicationTitle")){
+                                isPublication = true;
+                            }
 
                             //boolean hasExternalPath = false;
 
                             //boolean isExternal = isArticle && hasExternalPath;
                             //logger.error("Checking "+p.getPath());
                             //if(isPublished && (isProduct))
-                            if(isPublished)
+                            //if(isPublished)
+                            if(isPublished && (isPublication))
                             {   //logger.error("Parsing "+p.getPath());
                                 /** get the page title **/
+
+                                logger.info("-----");
+                                logger.info(p.toString());
+                                logger.info(p.getPath().toString());
+                                logger.info(p.getTitle().toString());
 
                                 String title = p.getTitle();
 
@@ -326,7 +338,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 String url = p.getPath() + ".html";
                                 String sourceURL = url;
 
-                                if(content.hasProperty("externalNewsArticlePath"))
+                                /* if(content.hasProperty("externalNewsArticlePath"))
                                 {
                                     if(content.getProperty("externalNewsArticlePath").isMultiple())
                                     {
@@ -347,7 +359,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                             url = content.getProperty("externalNewsArticlePath").getString();
                                         }
                                     }
-                                }                            
+                                } */                            
 
                                 Calendar dateTime = null;
 
@@ -370,7 +382,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
                                 /** Get thumbnail url for the page **/
                                 String thumbnailUrl = "";
-                                if(content.hasNode("thumbnailImage"))
+                                /* if(content.hasNode("thumbnailImage"))
                                 {
                                     Node thumbnail = content.getNode("thumbnailImage");
 
@@ -378,16 +390,24 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                     {
                                         thumbnailUrl = thumbnail.getProperty("fileReference").getString();
                                     }
-                                }
+                                } */
 
                                 /** Get page tags **/
+
+                                //String thumbnailUrl = "";
+                                String description = "";
+                                String placeOfPublication = "";
                                 
                                 TreeMap<String, String> tags = getProductPageTags(content);
-                                TreeMap<String, String> domain = getDomain(content);
-                                TreeMap<String, String> country = getCountry(content);
+                                TreeMap<String, String> authors = getPublicationAuthors(content);
+                                /* TreeMap<String, String> domain = getDomain(content);
+                                TreeMap<String, String> country = getCountry(content); */
 
                                 //items.add(new LockheedPublicationItem(title, dateTime, url, thumbnailUrl, tags, domain, country, sourceURL));
-                                items.add(new LockheedPublicationItem(title, url));
+                                logger.info("2");
+                                items.add(new LockheedPublicationItem(dateTime, title, url, tags, placeOfPublication, description, authors ));
+                                //items.add(new LockheedPublicationItem(title, url));
+                                logger.info("3");
                             }
                         }
                     }
@@ -490,7 +510,77 @@ public class LockheedPublicationFeedScheduler implements Runnable {
             TagManager tm = resourceResolver.adaptTo(TagManager.class);
             List<Value> tagValues = new ArrayList<>();
 
-            if(content.hasProperty("capabilitiesTag"))
+          /*   if(content.hasProperty("tagField"))
+            {
+                if(content.getProperty("tagField").isMultiple())
+                {
+                    tagValues.addAll(Arrays.asList(content.getProperty("tagField").getValues()));
+                }
+                else
+                {
+                    tagValues.add(content.getProperty("tagField").getValue());
+                }
+            } */
+
+            if(content.hasProperty("programOrFunctionTag"))
+            {
+                if(content.getProperty("programOrFunctionTag").isMultiple())
+                {
+                    tagValues.addAll(Arrays.asList(content.getProperty("programOrFunctionTag").getValues()));
+                }
+                else
+                {
+                    tagValues.add(content.getProperty("programOrFunctionTag").getValue());
+                }
+            }
+
+            if(!config.mapping_file_path().equals("")) {
+                //logger.error("Using Tag Mapping");
+                for(Value v: tagValues)
+                {
+                    //logger.error("Finding "+v.getString());
+                    if(tagMap.get(v.getString())!=null) {
+                        //logger.error("Found "+v.getString());
+                        List<String> tagMapEntries = tagMap.get(v.getString());
+                        for(String tagMapEntry: tagMapEntries) {
+                            if(tagTitleMap.get(tagMapEntry)!=null) {
+                                //logger.error("Adding "+tagMapEntry+":"+tagTitleMap.get(tagMapEntry));
+                                tags.put(tagMapEntry, tagTitleMap.get(tagMapEntry));
+                            }
+                        }
+                    }
+                }
+            } else {
+                for(Value v: tagValues)
+                {
+                    String tagId = v.getString();
+                    Tag t = tm.resolve(tagId);
+                    tags.put(t.getName(), t.getTitle());
+                }                
+            }
+
+            //Collections.sort(tags);
+        }
+        catch(Exception e)
+        {
+            //e.printStackTrace();
+            logger.error(e.getMessage());
+        }
+
+        return tags;
+    }
+
+    private TreeMap<String, String> getPublicationAuthors(Node content)
+    {
+        //List<String> tags = new ArrayList<>();
+        TreeMap<String, String> tags = new TreeMap<String, String>();
+
+        try
+        {
+            TagManager tm = resourceResolver.adaptTo(TagManager.class);
+            List<Value> tagValues = new ArrayList<>();
+
+            /* if(content.hasProperty("capabilitiesTag"))
             {
                 if(content.getProperty("capabilitiesTag").isMultiple())
                 {
@@ -499,6 +589,17 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                 else
                 {
                     tagValues.add(content.getProperty("capabilitiesTag").getValue());
+                }
+            } */
+            if(content.hasProperty("tagField"))
+            {
+                if(content.getProperty("tagField").isMultiple())
+                {
+                    tagValues.addAll(Arrays.asList(content.getProperty("tagField").getValues()));
+                }
+                else
+                {
+                    tagValues.add(content.getProperty("tagField").getValue());
                 }
             }
 

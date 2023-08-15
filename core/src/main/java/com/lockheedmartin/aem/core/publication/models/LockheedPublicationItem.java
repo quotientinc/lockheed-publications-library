@@ -1,4 +1,4 @@
-package com.lockheedmartin.aem.core.product.models;
+package com.lockheedmartin.aem.core.publication.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -21,6 +21,12 @@ public class LockheedPublicationItem
     @Expose @SerializedName(value = "Title")
     String title;
 
+    @Expose @SerializedName(value = "Description")
+    String description;
+
+    @Expose @SerializedName(value = "Place of Publication")
+    String placeOfPublication;
+
     @Expose @SerializedName(value = "Date")
     String date;
 
@@ -36,6 +42,9 @@ public class LockheedPublicationItem
     @Expose @SerializedName(value = "Tags")
     TreeMap<String, String> tags;
 
+    @Expose @SerializedName(value = "Authors")
+    TreeMap<String, String> authors;
+
     @Expose @SerializedName(value = "Domain")
     TreeMap<String, String> domain;
     
@@ -47,7 +56,7 @@ public class LockheedPublicationItem
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
 
-    public LockheedPublicationItem(String title, Calendar dateTime, String url, String thumbnailUrl, TreeMap<String, String> tags, TreeMap<String, String> domain, TreeMap<String, String> country, String sourceURL)
+    /* public LockheedPublicationItem(String title, Calendar dateTime, String url, String thumbnailUrl, TreeMap<String, String> tags, TreeMap<String, String> domain, TreeMap<String, String> country, String sourceURL)
     {
         this.title = title;
 
@@ -70,14 +79,31 @@ public class LockheedPublicationItem
         this.country = country;
         
         this.sourceURL = sourceURL;
-    }
+    } */
 
-    public LockheedPublicationItem(String title, String url)
+    public LockheedPublicationItem(Calendar dateTime, String title, String url, TreeMap<String, String> tags, String placeOfPublication, String description, TreeMap<String, String> authors)
     {
         this.title = title;
-
-
+        if(dateTime != null)
+        {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+            this.date = simpleDateFormat.format(dateTime.getTime());
+        }
+        else
+        {
+            this.date = "";
+        }
+        
         this.url = url;
+
+        this.description = description;
+
+        this.authors = authors;
+
+        this.placeOfPublication = placeOfPublication;
+
+        this.tags = tags;
+        /* this.url = url;
         this.thumbnailUrl = thumbnailUrl;
         this.tags = tags;
 
@@ -85,7 +111,7 @@ public class LockheedPublicationItem
         
         this.country = country;
         
-        this.sourceURL = sourceURL;
+        this.sourceURL = sourceURL; */
     }
     
     public Calendar getCalendarDate() throws ParseException

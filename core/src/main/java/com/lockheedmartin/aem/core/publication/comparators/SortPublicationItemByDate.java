@@ -1,8 +1,8 @@
-package com.lockheedmartin.aem.core.product.comparators;
-
-import com.lockheedmartin.aem.core.product.models.LockheedPublicationItem;
+package com.lockheedmartin.aem.core.publication.comparators;
 
 import java.util.Comparator;
+
+import com.lockheedmartin.aem.core.publication.models.LockheedPublicationItem;
 
 public class SortPublicationItemByDate implements Comparator<LockheedPublicationItem>
 {
