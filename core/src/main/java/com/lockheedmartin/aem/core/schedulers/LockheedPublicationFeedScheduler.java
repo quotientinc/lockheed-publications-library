@@ -85,8 +85,8 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         @AttributeDefinition(name = "Cron-job expression")
         String scheduler_expression() default "0 0 0 * * ?";
 
-        @AttributeDefinition(name = "Mapping File Path")
-        String mapping_file_path() default "";
+        /* @AttributeDefinition(name = "Mapping File Path")
+        String mapping_file_path() default ""; */
 
         @AttributeDefinition(name = "JSON File Path")
         String json_path() default "/content";
@@ -159,7 +159,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                             logger.info("------------------------------------------------------------------");
                             logger.info("------------------------------------------------------------------ ");
                             
-                            getMapping();
+                            /* getMapping(); */
                             //writeProductfeedJSONToRepo();
                             writePublicationFeedJSONToRepo();
                         }
@@ -377,7 +377,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         return items;
     }
 
-    private void getMapping() {
+    /* private void getMapping() {
         String mapFilePath = config.mapping_file_path()+"/jcr:content";
         //logger.error("Get Mapping for "+mapFilePath);
         try {
@@ -428,7 +428,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
             e.printStackTrace();            
         }
         
-    }
+    } */
 
     
     private TreeMap<String, String> getPublicationTags(Node content)
@@ -465,7 +465,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                 }
             } */
 
-            if(!config.mapping_file_path().equals("")) {
+            /* if(!config.mapping_file_path().equals("")) {
                 //logger.error("Using Tag Mapping");
                 for(Value v: tagValues)
                 {
@@ -488,7 +488,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                     Tag t = tm.resolve(tagId);
                     tags.put(t.getName(), t.getTitle());
                 }                
-            }
+            } */
 
             //Collections.sort(tags);
         }
