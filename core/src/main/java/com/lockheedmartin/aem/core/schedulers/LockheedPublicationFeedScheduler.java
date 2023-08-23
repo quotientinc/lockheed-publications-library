@@ -94,8 +94,8 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         @AttributeDefinition(name = "Enable Service")
         boolean is_enabled() default false;
 
-        @AttributeDefinition(name = "Date String", description = "Format YYYYMMDD")
-        String get_date_string() default "20190101";
+/*         @AttributeDefinition(name = "Date String", description = "Format YYYYMMDD")
+        String get_date_string() default "20190101"; */
 
         @AttributeDefinition(name = "Local Root Path", description = "Path to search on for Lockheed-Martin Publication in AEM")
         String[] get_root_path() default {"/content/lockheed-martin/en-us/products"};        
@@ -229,7 +229,9 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         items.addAll(getAEMProductfeedPages());
 
         logger.info("1");
+        logger.info(items.toString());
         //items.sort(new SortPublicationItemByTitle());
+        items.sort(new SortPublicationItemByDate());
 
         Collections.reverse(items);
 
@@ -330,8 +332,9 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 String title = "";
                                 String description = "";
                                 String url = "";
-                                String date = "";
+                                Calendar date = null;
                                 String placeOfPublication = "";
+                                String sourceURL = p.getPath();
 
                                 title = content.getProperty("publicationTitle").getString();
 
@@ -344,14 +347,16 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 }
 
                                 if(content.hasProperty("publicationDate")){
-                                    date = content.getProperty("publicationDate").getString();
+                                    /* date = content.getProperty("publicationDate").getString(); */
+                                    date = content.getProperty("publicationDate").getDate();
                                 }
 
                                 if(content.hasProperty("placeOfPublication")){
                                     placeOfPublication = content.getProperty("placeOfPublication").getString();
                                 }
 
-                                TreeMap<String, String> tags = getPublicationTags(content);
+                                ArrayList<String> topics = getPublicationTopics(content);
+                                ArrayList<String> businessAreas = getPublicationBusinessAreas(content);
                                 ArrayList<String> authors = getPublicationAuthors(content);
 
                                 logger.info("-----");
@@ -360,7 +365,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 logger.info(p.getTitle().toString());
 
                                 logger.info("2");
-                                items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, tags, authors));
+                                items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, topics, authors, sourceURL, businessAreas));
                                 logger.info("3");
                             }
                         }
@@ -430,8 +435,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         
     } */
 
-    
-    private TreeMap<String, String> getPublicationTags(Node content)
+    private TreeMap<String, String> getPublicationTagsOriginal(Node content)
     {
         //List<String> tags = new ArrayList<>();
         TreeMap<String, String> tags = new TreeMap<String, String>();
@@ -453,42 +457,13 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                 }
             }
 
-            /* if(content.hasProperty("programOrFunctionTag"))
-            {
-                if(content.getProperty("programOrFunctionTag").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("programOrFunctionTag").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("programOrFunctionTag").getValue());
-                }
-            } */
-
-            /* if(!config.mapping_file_path().equals("")) {
-                //logger.error("Using Tag Mapping");
-                for(Value v: tagValues)
-                {
-                    //logger.error("Finding "+v.getString());
-                    if(tagMap.get(v.getString())!=null) {
-                        //logger.error("Found "+v.getString());
-                        List<String> tagMapEntries = tagMap.get(v.getString());
-                        for(String tagMapEntry: tagMapEntries) {
-                            if(tagTitleMap.get(tagMapEntry)!=null) {
-                                //logger.error("Adding "+tagMapEntry+":"+tagTitleMap.get(tagMapEntry));
-                                tags.put(tagMapEntry, tagTitleMap.get(tagMapEntry));
-                            }
-                        }
-                    }
-                }
-            } else {
                 for(Value v: tagValues)
                 {
                     String tagId = v.getString();
                     Tag t = tm.resolve(tagId);
                     tags.put(t.getName(), t.getTitle());
                 }                
-            } */
+
 
             //Collections.sort(tags);
         }
@@ -500,12 +475,71 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
         return tags;
     }
+    
+    private ArrayList<String> getPublicationTopics(Node content)
+    {
+        ArrayList<String> tags = new ArrayList<String>();
+
+        try
+        {
+            TagManager tm = resourceResolver.adaptTo(TagManager.class);
+            if (content.hasProperty("publicationTopics")) {
+                Property tag = content.getProperty("publicationTopics");
+
+                Value[] tagValues = tag.getValues();
+        
+                for (Value j : tagValues) {
+                    String stringValue = j.getString();
+                    Tag t = tm.resolve(stringValue);
+                    logger.info(t.toString());
+                    tags.add(t.getTitle());
+                }
+
+            }
+
+        }
+        catch(Exception e)
+        {
+            logger.error(e.getMessage());
+        }
+
+        return tags;
+    }
+
+    private ArrayList<String> getPublicationBusinessAreas(Node content)
+    {
+        ArrayList<String> tags = new ArrayList<String>();
+
+        try
+        {
+            TagManager tm = resourceResolver.adaptTo(TagManager.class);
+            if (content.hasProperty("publicationBusinessAreas")) {
+                Property tag = content.getProperty("publicationBusinessAreas");
+
+                Value[] tagValues = tag.getValues();
+        
+                for (Value j : tagValues) {
+                    String stringValue = j.getString();
+                    Tag t = tm.resolve(stringValue);
+                    tags.add(t.getTitle());
+                }
+
+            }
+
+        }
+        catch(Exception e)
+        {
+            logger.error(e.getMessage());
+        }
+
+        return tags;
+    }
 
     private ArrayList<String> getPublicationAuthors(Node content)
     {
         //List<String> tags = new ArrayList<>();
         TreeMap<String, String> tags = new TreeMap<String, String>();
-        ArrayList<String> authorTest2 = new ArrayList<String>();
+        ArrayList<String> authors = new ArrayList<String>();
         try
         {
 
@@ -522,7 +556,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                     Node childNode = childNodes.nextNode();
                     String authorTest = childNode.getProperty("publicationAuthor").getString();
                     logger.info("---");
-                    authorTest2.add(authorTest);
+                    authors.add(authorTest);
 
                 }
 
@@ -534,7 +568,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
             logger.error(e.getMessage());
         }
 
-        return authorTest2;
+        return authors;
     }
 
 }

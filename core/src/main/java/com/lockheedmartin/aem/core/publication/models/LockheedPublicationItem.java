@@ -39,8 +39,11 @@ public class LockheedPublicationItem
     @Expose @SerializedName(value = "Thumbnail Image")
     String thumbnailUrl;
 
-    @Expose @SerializedName(value = "Tags")
-    TreeMap<String, String> tags;
+    @Expose @SerializedName(value = "Topics")
+    ArrayList<String> topics;
+
+    @Expose @SerializedName(value = "Business Areas")
+    ArrayList<String> businessAreas;
 
     @Expose @SerializedName(value = "Authors")
     ArrayList<String> authors;
@@ -81,11 +84,20 @@ public class LockheedPublicationItem
         this.sourceURL = sourceURL;
     } */
 
-    public LockheedPublicationItem(String date, String title, String url, String placeOfPublication, String description, TreeMap<String, String> tags, ArrayList<String> authors)
+    public LockheedPublicationItem(Calendar dateTime, String title, String url, String placeOfPublication, String description, ArrayList<String> topics, ArrayList<String> authors, String sourceURL, ArrayList<String> businessAreas)
     {
         this.title = title;
 
-        this.date = date;
+        /* this.date = date; */
+        if(dateTime != null)
+        {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+            this.date = simpleDateFormat.format(dateTime.getTime());
+        }
+        else
+        {
+            this.date = "";
+        }
         
         this.url = url;
 
@@ -95,7 +107,11 @@ public class LockheedPublicationItem
 
         this.placeOfPublication = placeOfPublication;
 
-        this.tags = tags;
+        this.topics = topics;
+
+        this.businessAreas = businessAreas;
+
+        this.sourceURL = sourceURL;
 
     }
     
