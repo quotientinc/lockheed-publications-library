@@ -85,17 +85,11 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         @AttributeDefinition(name = "Cron-job expression")
         String scheduler_expression() default "0 0 0 * * ?";
 
-        /* @AttributeDefinition(name = "Mapping File Path")
-        String mapping_file_path() default ""; */
-
         @AttributeDefinition(name = "JSON File Path")
         String json_path() default "/content";
 
         @AttributeDefinition(name = "Enable Service")
         boolean is_enabled() default false;
-
-/*         @AttributeDefinition(name = "Date String", description = "Format YYYYMMDD")
-        String get_date_string() default "20190101"; */
 
         @AttributeDefinition(name = "Local Root Path", description = "Path to search on for Lockheed-Martin Publication in AEM")
         String[] get_root_path() default {"/content/lockheed-martin/en-us/products"};        
@@ -116,9 +110,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String JOB_NAME = "Lockheed-Martin Publication Feed Job";
-    
-    private TreeMap<String, List<String>> tagMap = new TreeMap<String, List<String>>();
-    private TreeMap<String, String> tagTitleMap = new TreeMap<String, String>();
     
     @Override
     public void run() {}
@@ -159,8 +150,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                             logger.info("------------------------------------------------------------------");
                             logger.info("------------------------------------------------------------------ ");
                             
-                            /* getMapping(); */
-                            //writeProductfeedJSONToRepo();
                             writePublicationFeedJSONToRepo();
                         }
                     }
@@ -191,7 +180,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
     }
 
     private void writePublicationFeedJSONToRepo() throws Exception {
-        String jsonString = getProductItemsAsJSON();
+        String jsonString = getPublicationItemsAsJSON();
 
         Resource metadataOptionJson = ResourceUtil.getOrCreateResource(
                 resourceResolver,
@@ -223,14 +212,10 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         logger.info("----------------------- Publication Written to Repo! ---------------------- ");
     }
 
-    private String getProductItemsAsJSON() throws Exception {
+    private String getPublicationItemsAsJSON() throws Exception {
         List<LockheedPublicationItem> items = new ArrayList<>();
 
         items.addAll(getAEMProductfeedPages());
-
-        logger.info("1");
-        logger.info(items.toString());
-        //items.sort(new SortPublicationItemByTitle());
         items.sort(new SortPublicationItemByDate());
 
         Collections.reverse(items);
@@ -242,8 +227,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         return gson.toJson(items);
     }
 
-
-
     private List<LockheedPublicationItem> getAEMProductfeedPages()
     {
         List<LockheedPublicationItem> items = new ArrayList<>();
@@ -252,8 +235,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
         PageManager pageManager;
         pageManager = resourceResolver.adaptTo(PageManager.class);
-
-        Externalizer ext = resourceResolver.adaptTo(Externalizer.class);
         
         for(String rootPath : config.get_root_path()) {
 
@@ -283,52 +264,19 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                             Node content = pNode.getNode("jcr:content");
 
                             boolean isPublished = true;
-                            //logger.info(content.toString());
 
                             ReplicationStatus publishedStatus = null;
                             //publishedStatus = p.adaptTo(ReplicationStatus.class);
                             //isPublished = publishedStatus.isActivated();
 
-                            /* boolean isProduct = false; */
-                            boolean isPublication = false;
-
-                            /* if(content.hasProperty("contentTypeTag"))
-                            {
-                                if(content.getProperty("contentTypeTag").isMultiple())
-                                {
-                                    List<Value> contentTypeTagValues = Arrays.asList(content.getProperty("contentTypeTag").getValues());
-
-                                    for(int i = 0; i < contentTypeTagValues.size(); i++)
-                                    {
-                                        if(contentTypeTagValues.get(i).getString().equals("content-type:products"))
-                                        {
-                                            isProduct = true;
-                                        }                                   
-                                    }
-                                }
-                                else
-                                {
-                                    if(content.getProperty("contentTypeTag").getString().equals("content-type:products"))
-                                    {
-                                        isProduct = true;
-                                    }
-                                }
-                            }    */    
+                            boolean isPublication = false; 
                             
                             if(content.hasProperty("publicationTitle")){
                                 isPublication = true;
                             }
 
-                            //boolean hasExternalPath = false;
-
-                            //boolean isExternal = isArticle && hasExternalPath;
-                            //logger.error("Checking "+p.getPath());
-                            //if(isPublished && (isProduct))
-                            //if(isPublished)
                             if(isPublished && (isPublication))
-                            {   //logger.error("Parsing "+p.getPath());
-                                /** get the page title **/
-
+                            {   
                                 String title = "";
                                 String description = "";
                                 String url = "";
@@ -347,7 +295,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 }
 
                                 if(content.hasProperty("publicationDate")){
-                                    /* date = content.getProperty("publicationDate").getString(); */
                                     date = content.getProperty("publicationDate").getDate();
                                 }
 
@@ -364,9 +311,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 logger.info(p.getPath().toString());
                                 logger.info(p.getTitle().toString());
 
-                                logger.info("2");
                                 items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, topics, authors, sourceURL, businessAreas));
-                                logger.info("3");
                             }
                         }
                     }
@@ -381,101 +326,8 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
         return items;
     }
-
-    /* private void getMapping() {
-        String mapFilePath = config.mapping_file_path()+"/jcr:content";
-        //logger.error("Get Mapping for "+mapFilePath);
-        try {
-            if(session.nodeExists(mapFilePath)) {
-                String mapInput = session.getNode(mapFilePath).getProperty("jcr:data").getString();
-                JsonParser parser = new JsonParser();
-                
-                if(parser.parse(mapInput).isJsonObject()) {
-                    JsonObject mapData = parser.parse(mapInput).getAsJsonObject();
-                    
-                    if(mapData.has("Tags")) {
-                        JsonObject tagData = mapData.getAsJsonObject("Tags");
-                        Object[] tagDataKeys = tagData.keySet().toArray();
-                        
-                        for(int i=0; i<tagDataKeys.length; i++) {
-                            String tagKey = tagDataKeys[i].toString();
-                            if(tagData.has(tagKey)) {
-                                JsonArray tagValue = tagData.getAsJsonArray(tagKey);
-
-                                List<String> tagValueList = new ArrayList<String>();
-                                for(int j=0; j<tagValue.size(); j++) {
-                                    JsonElement tagValueElem = tagValue.get(j);
-                                    tagValueList.add(tagValueElem.getAsString());
-                                }
-                                tagMap.put(tagKey, tagValueList);
-                            }
-                        }
-                    }
-                    
-                    if(mapData.has("TagTitle")) {
-                        JsonObject tagTitleData = mapData.getAsJsonObject("TagTitle");
-                        Object[] tagTitleDataKeys = tagTitleData.keySet().toArray();
-                        
-                        for(int i=0; i<tagTitleDataKeys.length; i++) {
-                            String tagKey = tagTitleDataKeys[i].toString();
- 
-                            if(tagTitleData.has(tagKey)) {
-                                JsonPrimitive tagValue = tagTitleData.getAsJsonPrimitive(tagKey);
-                                tagTitleMap.put(tagKey, tagValue.getAsString());
-                            }
-                        }                        
-                    }
-
-                }
-            }
-        } catch(Exception e) {
-            logger.error(e.getMessage());
-            e.printStackTrace();            
-        }
-        
-    } */
-
-    private TreeMap<String, String> getPublicationTagsOriginal(Node content)
-    {
-        //List<String> tags = new ArrayList<>();
-        TreeMap<String, String> tags = new TreeMap<String, String>();
-
-        try
-        {
-            TagManager tm = resourceResolver.adaptTo(TagManager.class);
-            List<Value> tagValues = new ArrayList<>();
-
-            if(content.hasProperty("publicationTags"))
-            {
-                if(content.getProperty("publicationTags").isMultiple())
-                {
-                    tagValues.addAll(Arrays.asList(content.getProperty("publicationTags").getValues()));
-                }
-                else
-                {
-                    tagValues.add(content.getProperty("publicationTags").getValue());
-                }
-            }
-
-                for(Value v: tagValues)
-                {
-                    String tagId = v.getString();
-                    Tag t = tm.resolve(tagId);
-                    tags.put(t.getName(), t.getTitle());
-                }                
-
-
-            //Collections.sort(tags);
-        }
-        catch(Exception e)
-        {
-            //e.printStackTrace();
-            logger.error(e.getMessage());
-        }
-
-        return tags;
-    }
     
+    /* Publication Topic Tags */
     private ArrayList<String> getPublicationTopics(Node content)
     {
         ArrayList<String> tags = new ArrayList<String>();
@@ -494,7 +346,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                     logger.info(t.toString());
                     tags.add(t.getTitle());
                 }
-
             }
 
         }
@@ -506,6 +357,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         return tags;
     }
 
+    /* Publication Business Area Tags */
     private ArrayList<String> getPublicationBusinessAreas(Node content)
     {
         ArrayList<String> tags = new ArrayList<String>();
@@ -523,7 +375,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                     Tag t = tm.resolve(stringValue);
                     tags.add(t.getTitle());
                 }
-
             }
 
         }
@@ -537,29 +388,21 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
     private ArrayList<String> getPublicationAuthors(Node content)
     {
-        //List<String> tags = new ArrayList<>();
-        TreeMap<String, String> tags = new TreeMap<String, String>();
         ArrayList<String> authors = new ArrayList<String>();
         try
         {
 
-            logger.info("A");
             if(content.hasNode("multifield"))
             {
-                logger.info("B");
                 String test = content.getNode("multifield").toString();
-                logger.info(test);
                 Node multifieldNode = content.getNode("multifield");
                 NodeIterator childNodes = multifieldNode.getNodes();
 
                 while (childNodes.hasNext()){
                     Node childNode = childNodes.nextNode();
                     String authorTest = childNode.getProperty("publicationAuthor").getString();
-                    logger.info("---");
                     authors.add(authorTest);
-
                 }
-
             }     
         }
         catch(Exception e)
