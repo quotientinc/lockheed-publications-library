@@ -330,51 +330,67 @@ public class LockheedPublicationFeedScheduler implements Runnable {
     /* Publication Topic Tags */
     private ArrayList<String> getPublicationTopics(Node content)
     {
-        ArrayList<String> tags = new ArrayList<String>();
+        ArrayList<String> topics = new ArrayList<String>();
 
         try
         {
             TagManager tm = resourceResolver.adaptTo(TagManager.class);
-            if (content.hasProperty("publicationTopics")) {
-                Property tag = content.getProperty("publicationTopics");
+            List<Value> tagValues = new ArrayList<>();
 
-                Value[] tagValues = tag.getValues();
-        
-                for (Value j : tagValues) {
-                    String stringValue = j.getString();
-                    Tag t = tm.resolve(stringValue);
-                    logger.info(t.toString());
-                    tags.add(t.getTitle());
+            if(content.hasProperty("publicationTopics"))
+            {
+                if(content.getProperty("publicationTopics").isMultiple())
+                {
+                    tagValues.addAll(Arrays.asList(content.getProperty("publicationTopics").getValues()));
+                }
+                else
+                {
+                    tagValues.add(content.getProperty("publicationTopics").getValue());
                 }
             }
 
+            for(Value v: tagValues)
+            {
+                String tagId = v.getString();
+                Tag t = tm.resolve(tagId);
+                topics.add(t.getTitle());
+            }
         }
         catch(Exception e)
         {
             logger.error(e.getMessage());
         }
 
-        return tags;
+        return topics;
     }
 
     /* Publication Business Area Tags */
     private ArrayList<String> getPublicationBusinessAreas(Node content)
     {
-        ArrayList<String> tags = new ArrayList<String>();
+        ArrayList<String> businessAreas = new ArrayList<String>();
 
         try
         {
             TagManager tm = resourceResolver.adaptTo(TagManager.class);
-            if (content.hasProperty("publicationBusinessAreas")) {
-                Property tag = content.getProperty("publicationBusinessAreas");
+            List<Value> tagValues = new ArrayList<>();
 
-                Value[] tagValues = tag.getValues();
-        
-                for (Value j : tagValues) {
-                    String stringValue = j.getString();
-                    Tag t = tm.resolve(stringValue);
-                    tags.add(t.getTitle());
+            if(content.hasProperty("publicationBusinessAreas"))
+            {
+                if(content.getProperty("publicationBusinessAreas").isMultiple())
+                {
+                    tagValues.addAll(Arrays.asList(content.getProperty("publicationBusinessAreas").getValues()));
                 }
+                else
+                {
+                    tagValues.add(content.getProperty("publicationBusinessAreas").getValue());
+                }
+            }
+
+            for(Value v: tagValues)
+            {
+                String tagId = v.getString();
+                Tag t = tm.resolve(tagId);
+                businessAreas.add(t.getTitle());
             }
 
         }
@@ -383,7 +399,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
             logger.error(e.getMessage());
         }
 
-        return tags;
+        return businessAreas;
     }
 
     private ArrayList<String> getPublicationAuthors(Node content)
@@ -394,7 +410,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
             if(content.hasNode("multifield"))
             {
-                String test = content.getNode("multifield").toString();
                 Node multifieldNode = content.getNode("multifield");
                 NodeIterator childNodes = multifieldNode.getNodes();
 
