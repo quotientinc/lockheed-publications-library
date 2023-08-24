@@ -92,7 +92,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         boolean is_enabled() default false;
 
         @AttributeDefinition(name = "Local Root Path", description = "Path to search on for Lockheed-Martin Publication in AEM")
-        String[] get_root_path() default {"/content/lockheed-martin/en-us/products"};        
+        String[] get_root_path() default {"/content/lockheed-martin/en-us"};        
     }
 
     @Reference
@@ -140,7 +140,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                         session = resourceResolver.adaptTo(Session.class);
 
                         Map<String, Object> param = new HashMap<String, Object>();
-                        param.put(ResourceResolverFactory.SUBSERVICE, "LockheedProductFeedScheduler");
+                        param.put(ResourceResolverFactory.SUBSERVICE, "LockheedPublicationFeedScheduler");
 
                         if(config.is_enabled())
                         {
@@ -174,7 +174,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         }
         catch(Exception e)
         {
-            //e.printStackTrace();
             logger.error(e.getMessage());
         }
     }
@@ -208,14 +207,14 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         metadataOptionJsonProperties.put("jcr:data", bais);
 
         resourceResolver.commit();
-        /* replicator.replicate(session, ReplicationActionType.ACTIVATE, metadataOptionJson.getPath()); */
+        replicator.replicate(session, ReplicationActionType.ACTIVATE, metadataOptionJson.getPath());
         logger.info("----------------------- Publication Written to Repo! ---------------------- ");
     }
 
     private String getPublicationItemsAsJSON() throws Exception {
         List<LockheedPublicationItem> items = new ArrayList<>();
 
-        items.addAll(getAEMProductfeedPages());
+        items.addAll(getAEMPublicationfeedPages());
         items.sort(new SortPublicationItemByDate());
 
         Collections.reverse(items);
@@ -227,7 +226,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
         return gson.toJson(items);
     }
 
-    private List<LockheedPublicationItem> getAEMProductfeedPages()
+    private List<LockheedPublicationItem> getAEMPublicationfeedPages()
     {
         List<LockheedPublicationItem> items = new ArrayList<>();
 
@@ -263,11 +262,11 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                         {
                             Node content = pNode.getNode("jcr:content");
 
-                            boolean isPublished = true;
+                            boolean isPublished = false;
 
                             ReplicationStatus publishedStatus = null;
-                            //publishedStatus = p.adaptTo(ReplicationStatus.class);
-                            //isPublished = publishedStatus.isActivated();
+                            publishedStatus = p.adaptTo(ReplicationStatus.class);
+                            isPublished = publishedStatus.isActivated();
 
                             boolean isPublication = false; 
                             
