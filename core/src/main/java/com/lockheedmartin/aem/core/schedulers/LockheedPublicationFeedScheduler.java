@@ -69,17 +69,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.sling.commons.json.*;
 
 
-/**
- * A simple demo for cron-job like tasks that get executed regularly.
- * It also demonstrates how property values can be set. Users can
- * set the property values in /system/console/configMgr
- */
 @Designate(ocd=LockheedPublicationFeedScheduler.Config.class)
 @Component(service=Runnable.class)
 public class LockheedPublicationFeedScheduler implements Runnable {
 
     @ObjectClassDefinition(name="Lockheed Publication Feed Scheduler Configuration",
-                           description = "Simple demo for cron-job like task with properties")
+                           description = "Creates a JSON document based on the Document Library page properties")
     public static @interface Config {
 
         @AttributeDefinition(name = "Cron-job expression")
@@ -144,12 +139,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
                         if(config.is_enabled())
                         {
-                            logger.info("------------------------------------------------------------------ ");
-                            logger.info("------------------------------------------------------------------ ");
-                            logger.info("----------------------- ENABLED AND RUNNING!---------------------- ");
-                            logger.info("------------------------------------------------------------------");
-                            logger.info("------------------------------------------------------------------ ");
-                            
                             writePublicationFeedJSONToRepo();
                         }
                     }
@@ -208,7 +197,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
         resourceResolver.commit();
         replicator.replicate(session, ReplicationActionType.ACTIVATE, metadataOptionJson.getPath());
-        logger.info("----------------------- Publication Written to Repo! ---------------------- ");
     }
 
     private String getPublicationItemsAsJSON() throws Exception {
@@ -304,11 +292,6 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                 ArrayList<String> topics = getPublicationTopics(content);
                                 ArrayList<String> businessAreas = getPublicationBusinessAreas(content);
                                 ArrayList<String> authors = getPublicationAuthors(content);
-
-                                logger.info("-----");
-                                logger.info(p.toString());
-                                logger.info(p.getPath().toString());
-                                logger.info(p.getTitle().toString());
 
                                 items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, topics, authors, sourceURL, businessAreas));
                             }
