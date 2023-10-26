@@ -289,11 +289,12 @@ public class LockheedPublicationFeedScheduler implements Runnable {
                                     placeOfPublication = content.getProperty("placeOfPublication").getString();
                                 }
 
-                                ArrayList<String> topics = getPublicationTopics(content);
+                                TreeMap<String, String> topics = getPublicationTopics(content);
+                                TreeMap<String, String> groups = getPublicationGroups(content);
                                 ArrayList<String> businessAreas = getPublicationBusinessAreas(content);
                                 ArrayList<String> authors = getPublicationAuthors(content);
 
-                                items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, topics, authors, sourceURL, businessAreas));
+                                items.add(new LockheedPublicationItem(date, title, url, placeOfPublication, description, topics, authors, sourceURL, businessAreas, groups));
                             }
                         }
                     }
@@ -310,9 +311,9 @@ public class LockheedPublicationFeedScheduler implements Runnable {
     }
     
     /* Publication Topic Tags */
-    private ArrayList<String> getPublicationTopics(Node content)
+    private TreeMap<String, String> getPublicationTopics(Node content)
     {
-        ArrayList<String> topics = new ArrayList<String>();
+        TreeMap<String, String> topics = new TreeMap<String, String>();
 
         try
         {
@@ -335,7 +336,7 @@ public class LockheedPublicationFeedScheduler implements Runnable {
             {
                 String tagId = v.getString();
                 Tag t = tm.resolve(tagId);
-                topics.add(t.getTitle());
+                topics.put(t.getName(), t.getTitle());
             }
         }
         catch(Exception e)
@@ -345,6 +346,43 @@ public class LockheedPublicationFeedScheduler implements Runnable {
 
         return topics;
     }
+    
+    /* Publication Group Tags */
+    private TreeMap<String, String> getPublicationGroups(Node content)
+    {
+        TreeMap<String, String> groups = new TreeMap<String, String>();
+
+        try
+        {
+            TagManager tm = resourceResolver.adaptTo(TagManager.class);
+            List<Value> tagValues = new ArrayList<>();
+
+            if(content.hasProperty("researchGroup"))
+            {
+                if(content.getProperty("researchGroup").isMultiple())
+                {
+                    tagValues.addAll(Arrays.asList(content.getProperty("researchGroup").getValues()));
+                }
+                else
+                {
+                    tagValues.add(content.getProperty("researchGroup").getValue());
+                }
+            }
+
+            for(Value v: tagValues)
+            {
+                String tagId = v.getString();
+                Tag t = tm.resolve(tagId);
+                groups.put(t.getName(), t.getTitle());
+            }
+        }
+        catch(Exception e)
+        {
+            logger.error(e.getMessage());
+        }
+
+        return groups;
+    }    
 
     /* Publication Business Area Tags */
     private ArrayList<String> getPublicationBusinessAreas(Node content)

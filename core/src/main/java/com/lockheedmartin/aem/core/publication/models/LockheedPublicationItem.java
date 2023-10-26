@@ -40,7 +40,10 @@ public class LockheedPublicationItem
     String thumbnailUrl;
 
     @Expose @SerializedName(value = "Topics")
-    ArrayList<String> topics;
+    TreeMap<String, String> topics;
+    
+    @Expose @SerializedName(value = "Groups")
+    TreeMap<String, String> groups;    
 
     @Expose @SerializedName(value = "Business Areas")
     ArrayList<String> businessAreas;
@@ -84,7 +87,7 @@ public class LockheedPublicationItem
         this.sourceURL = sourceURL;
     } */
 
-    public LockheedPublicationItem(Calendar dateTime, String title, String url, String placeOfPublication, String description, ArrayList<String> topics, ArrayList<String> authors, String sourceURL, ArrayList<String> businessAreas)
+    public LockheedPublicationItem(Calendar dateTime, String title, String url, String placeOfPublication, String description, TreeMap<String, String> topics, ArrayList<String> authors, String sourceURL, ArrayList<String> businessAreas, TreeMap<String, String> groups)
     {
         this.title = title;
 
@@ -110,6 +113,8 @@ public class LockheedPublicationItem
         this.topics = topics;
 
         this.businessAreas = businessAreas;
+        
+        this.groups = groups;
 
         this.sourceURL = sourceURL;
 
